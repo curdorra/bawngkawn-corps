@@ -15,15 +15,16 @@ export class StorageNotSetUp extends Error {}
 let sql: ReturnType<typeof neon> | null = null;
 let ready: Promise<unknown> | null = null;
 async function db() {
-  sql ??= neon(dbUrl());
-  ready ??= sql`create table if not exists kv (key text primary key, value jsonb not null, updated_at timestamptz not null default now())`;
+  const query = (sql ??= neon(dbUrl()));
+  ready ??= Promise.resolve(query`create table if not exists kv (key text primary key, value jsonb not null, updated_at timestamptz not null default now())`);
   await ready;
-  return sql;
+  return query;
 }
 
 export async function readJson<T>(key: string, fallback: T): Promise<T> {
   if (dbUrl()) {
-    const rows = (await (await db())`select value from kv where key = ${key}`) as { value: T }[];
+    const query = await db();
+    const rows = (await query`select value from kv where key = ${key}`) as { value: T }[];
     return rows.length ? rows[0].value : fallback;
   }
   if (process.env.VERCEL) return fallback; // nothing to read yet
@@ -34,7 +35,8 @@ export async function readJson<T>(key: string, fallback: T): Promise<T> {
 export async function writeJson(key: string, value: unknown) {
   if (dbUrl()) {
     const body = JSON.stringify(value);
-    await (await db())`insert into kv (key, value) values (${key}, ${body}::jsonb) on conflict (key) do update set value = excluded.value, updated_at = now()`;
+    const query = await db();
+    await query`insert into kv (key, value) values (${key}, ${body}::jsonb) on conflict (key) do update set value = excluded.value, updated_at = now()`;
     return;
   }
   // Vercel's disk is read-only, so without a database nothing could be saved. Say so clearly.

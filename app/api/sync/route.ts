@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!secret || (key !== secret && bearer !== secret)) return new Response("Not allowed", { status: 401 });
 
-  const result = await syncPhotos({ budgetMs: 50_000 });
+  const result = await syncPhotos();
   if (result.added || result.removed) {
     revalidatePath("/", "layout");
   }

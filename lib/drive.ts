@@ -1,8 +1,19 @@
-import { googleFetch } from "./google";
+import { googleConfigured, googleFetch } from "./google";
 
-export type DriveFile = { id: string; name: string; mimeType: string; md5Checksum?: string; thumbnailLink?: string; createdTime: string };
+export type DriveFile = { id: string; name: string; mimeType: string; createdTime: string };
 
 const API = "https://www.googleapis.com/drive/v3/files";
+
+// Reads the "Website Photos" folder. Works with the website's service account, or, for a folder shared as
+// "anyone with the link", with just a GOOGLE_API_KEY. Nothing is copied: the site only reads names and ids.
+export const driveConfigured = () => googleConfigured() || Boolean(process.env.GOOGLE_API_KEY);
+
+async function get(url: string) {
+  if (googleConfigured()) return googleFetch(url);
+  const res = await fetch(`${url}&key=${process.env.GOOGLE_API_KEY}`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Drive request failed: ${res.status} ${await res.text()}`);
+  return res;
+}
 
 async function list(q: string, fields: string): Promise<DriveFile[]> {
   const out: DriveFile[] = [];
@@ -17,7 +28,7 @@ async function list(q: string, fields: string): Promise<DriveFile[]> {
       includeItemsFromAllDrives: "true",
     });
     if (pageToken) params.set("pageToken", pageToken);
-    const data = (await (await googleFetch(`${API}?${params}`)).json()) as { files: DriveFile[]; nextPageToken?: string };
+    const data = (await (await get(`${API}?${params}`)).json()) as { files: DriveFile[]; nextPageToken?: string };
     out.push(...data.files);
     pageToken = data.nextPageToken ?? "";
   } while (pageToken);
@@ -30,16 +41,11 @@ export const listAlbumFolders = (rootId: string) =>
 
 /** Photos inside one programme folder. */
 export const listImages = (folderId: string) =>
-  list(`'${folderId}' in parents and mimeType contains 'image/' and trashed = false`, "id, name, mimeType, md5Checksum, thumbnailLink, createdTime");
+  list(`'${folderId}' in parents and mimeType contains 'image/' and trashed = false`, "id, name, mimeType, createdTime");
 
-export async function downloadFile(id: string): Promise<Buffer> {
-  const res = await googleFetch(`${API}/${id}?alt=media&supportsAllDrives=true`);
-  return Buffer.from(await res.arrayBuffer());
-}
-
-/** Google's own JPEG rendering of a file. Used for iPhone HEIC photos, which we can't convert ourselves. */
-export async function downloadRendition(file: DriveFile, size = 3000): Promise<Buffer> {
-  if (!file.thumbnailLink) throw new Error(`No rendition available for ${file.name}`);
-  const res = await googleFetch(file.thumbnailLink.replace(/=s\d+$/, `=s${size}`));
-  return Buffer.from(await res.arrayBuffer());
-}
+// Google serves any shared image at any size from these addresses (and turns iPhone HEIC photos into JPEGs).
+export const photoUrls = (id: string) => ({
+  thumb: `https://lh3.googleusercontent.com/d/${id}=w600`,
+  preview: `https://lh3.googleusercontent.com/d/${id}=w2000`,
+  original: `https://lh3.googleusercontent.com/d/${id}=s0`,
+});

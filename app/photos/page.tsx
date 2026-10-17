@@ -21,7 +21,7 @@ export default async function PhotosPage() {
           <h1 className="h2">
             Our <em>programmes</em>
           </h1>
-          <p className="lead">Photos from every programme, newest first. Open an album to save single photos or download them all.</p>
+          <p className="lead">Photos from every programme, newest first. Open an album and tap a photo to save it.</p>
         </div>
       </header>
       <main className="section">
