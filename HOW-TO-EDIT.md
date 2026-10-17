@@ -27,10 +27,11 @@ Changes appear on the website **within about 5 minutes**.
 
 ## Putting up a sermon
 
-1. Upload the video to YouTube as usual.
-2. Open the website, scroll to the bottom and press **Admin** (or go to `/admin`). Sign in with your name and password.
-3. In **Sermons**, paste the YouTube link. The title, thumbnail and date fill in by themselves.
-4. Add the preacher, scripture, series, language, a short summary and any notes, then press **Publish**. It is on the website straight away.
+Sermons are scriptures and notes only. They are not linked to YouTube. The "Latest videos" on the home page come from the YouTube channel on their own.
+
+1. Open the website, scroll to the bottom and press **Admin** (or go to `/admin`). Sign in with your name and password.
+2. In **Sermons**, type the title and date.
+3. Add the preacher, scripture, series, language, a short summary and any notes, then press **Publish**. It is on the website straight away.
 
 **Good to know**
 - **Series:** make one in the **Series** tab first, then pick it on the sermon. Renaming a series renames it everywhere.

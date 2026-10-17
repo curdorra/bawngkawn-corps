@@ -20,9 +20,9 @@ export default async function AdminPage() {
     const hidden = new Set(settings.hiddenAlbums);
     data = {
       sermons: sermons.map((s) => ({
-        id: s.id, date: s.date, title: s.title, youtubeId: s.youtubeId ?? "", preacher: s.preacher ?? "", scripture: s.scripture ?? "",
+        id: s.id, date: s.date, title: s.title, preacher: s.preacher ?? "", scripture: s.scripture ?? "",
         seriesId: s.seriesId ?? "", language: s.language ?? "", summary: s.summary ?? "", notes: s.notes ?? s.text ?? "",
-        hidden: Boolean(s.hidden), pinned: s.featured, thumb: s.thumb,
+        hidden: Boolean(s.hidden), pinned: s.featured,
       })),
       series: settings.series,
       albums: albums.map((a) => ({ key: albumKey(a), title: a.title, date: a.date, count: a.photos.length, cover: a.photos[0].thumb, hidden: hidden.has(albumKey(a)) })),

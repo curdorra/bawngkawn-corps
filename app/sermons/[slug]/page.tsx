@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const s = await getSermon((await params).slug);
   if (!s) return {};
   const description = s.summary || s.noteLines[0]?.slice(0, 160) || [s.preacher, s.scripture].filter(Boolean).join(" · ");
-  return { title: s.title, description, openGraph: s.thumb ? { images: [s.thumb] } : undefined };
+  return { title: s.title, description };
 }
 
 export default async function SermonPage({ params }: Params) {
@@ -48,18 +48,6 @@ export default async function SermonPage({ params }: Params) {
         </Link>
       }
     >
-      {s.youtubeId && (
-        <div className="player" style={{ marginBottom: "clamp(28px, 4vw, 48px)" }}>
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${s.youtubeId}?rel=0`}
-            title={s.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            loading="lazy"
-          />
-        </div>
-      )}
-
       <div className="sermon-layout">
         <article className="prose">
           {s.summary && (
@@ -76,7 +64,7 @@ export default async function SermonPage({ params }: Params) {
               ))}
             </>
           )}
-          {!s.summary && s.noteLines.length === 0 && <p className="tip">Watch the message above.</p>}
+          {!s.summary && s.noteLines.length === 0 && <p className="tip">Notes for this message will be added soon.</p>}
         </article>
 
         <aside className="sermon-side">

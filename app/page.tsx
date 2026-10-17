@@ -1,21 +1,20 @@
 import Link from "next/link";
 import { after } from "next/server";
 import { getContent } from "@/lib/content";
-import { getAlbums, latestPhotos } from "@/lib/albums";
-import { listSermons, pickFeatured, toCard } from "@/lib/sermons";
+import { formatDate, getAlbums, latestPhotos } from "@/lib/albums";
+import { getVideos } from "@/lib/videos";
 import { syncIfStale } from "@/lib/sync";
 import { Footer, Header } from "@/components/Nav";
 import { AlbumCard } from "@/components/AlbumCard";
 import { LatestPhotos } from "@/components/AlbumViewer";
-import { SermonCard } from "@/components/SermonBrowser";
-import { ArrowUpRight, Book, Camera, Heart, Pin } from "@/components/icons";
+import { ArrowUpRight, Book, Camera, Heart, Pin, PlayFill } from "@/components/icons";
 
 // Refresh every few minutes so new albums and sermons show up on their own.
 export const revalidate = 120;
 
 const features = [
   { href: "/photos", icon: <Camera />, title: "Photos", text: "Every programme in its own album. Save the ones you like in full quality.", cta: "See photos" },
-  { href: "/sermons", icon: <Book />, title: "Sermons", text: "Watch or revisit a message, with the scripture, summary and notes.", cta: "Hear the word" },
+  { href: "/sermons", icon: <Book />, title: "Sermons", text: "Revisit a message: the scripture, a summary and notes.", cta: "Read the word" },
   { href: "/give", icon: <Heart />, title: "Give", text: "Support our worship, our sections and our care by UPI or bank.", cta: "Give" },
 ];
 
@@ -25,9 +24,7 @@ export default async function Home() {
   const allAlbums = await getAlbums();
   const albums = allAlbums.slice(0, 6);
   const latest = latestPhotos(allAlbums, 9);
-  const sermons = (await listSermons().catch(() => [])).filter((s) => s.youtubeId);
-  const featured = pickFeatured(sermons);
-  const videos = (featured ? [featured, ...sermons.filter((s) => s !== featured)] : []).slice(0, 3).map(toCard);
+  const videos = await getVideos(site.social.youtube);
 
   return (
     <>
@@ -70,22 +67,31 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── Latest YouTube videos (the pinned sermon comes first) ── */}
+      {/* ── Latest videos from the YouTube channel (separate from sermons) ── */}
       {videos.length > 0 && (
-        <section id="sermons" className="section">
+        <section id="videos" className="section">
           <div className="wrap">
             <div className="section-head">
               <h2 className="h2">
                 Latest <em>videos</em>
               </h2>
-              <Link href="/sermons" className="u-link">
-                All sermons <ArrowUpRight />
-              </Link>
+              <a href={site.social.youtube} className="u-link" target="_blank" rel="noreferrer">
+                YouTube channel <ArrowUpRight />
+              </a>
             </div>
             <ul className="sermon-grid">
-              {videos.map((s) => (
-                <li key={s.slug}>
-                  <SermonCard s={s} />
+              {videos.map((v) => (
+                <li key={v.id}>
+                  <a href={v.url} className="sermon-card" target="_blank" rel="noreferrer">
+                    <span className="thumb">
+                      <img src={v.thumb} alt="" loading="lazy" />
+                      <i className="play"><PlayFill /></i>
+                    </span>
+                    <div className="meta">
+                      <span>{formatDate(v.date)}</span>
+                    </div>
+                    <h3>{v.title}</h3>
+                  </a>
                 </li>
               ))}
             </ul>

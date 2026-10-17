@@ -1,10 +1,9 @@
 import { formatDate, slugify } from "./albums";
 import { getSettings } from "./settings";
 import { readJson, writeJson } from "./store";
-import { thumbUrl } from "./youtube";
 
-// Sermons are YouTube videos with details around them. They are added in the admin area (/admin)
-// and saved by lib/store.ts. Sermons written before videos were added only have `text` (shown as notes).
+// Sermons are written messages: scripture, summary and notes. They are added in the admin area (/admin)
+// and saved by lib/store.ts. They have nothing to do with the YouTube channel. Older ones only have `text` (shown as notes).
 
 export type Language = "mizo" | "english";
 
@@ -12,7 +11,6 @@ export type StoredSermon = {
   id: string;
   date: string; // YYYY-MM-DD
   title: string;
-  youtubeId?: string;
   preacher?: string;
   scripture?: string;
   seriesId?: string;
@@ -25,7 +23,6 @@ export type StoredSermon = {
 
 export type Sermon = StoredSermon & {
   slug: string;
-  thumb: string;
   series: string; // series name, "" if none
   noteLines: string[];
   featured: boolean;
@@ -53,7 +50,6 @@ export async function listSermons({ includeHidden = false } = {}): Promise<Sermo
       return {
         ...s,
         slug,
-        thumb: s.youtubeId ? thumbUrl(s.youtubeId) : "",
         series: (s.seriesId && seriesName.get(s.seriesId)) || "",
         noteLines: lines(s.notes ?? s.text),
         featured: s.id === settings.pinnedId,
@@ -63,11 +59,6 @@ export async function listSermons({ includeHidden = false } = {}): Promise<Sermo
 
 export async function getSermon(slug: string) {
   return (await listSermons()).find((s) => s.slug === slug);
-}
-
-/** The pinned sermon if it is still visible, otherwise the newest sermon that has a video. */
-export function pickFeatured(sermons: Sermon[]) {
-  return sermons.find((s) => s.featured) ?? sermons.find((s) => s.youtubeId) ?? sermons[0];
 }
 
 /** First few words of the summary (or notes), for cards. */
@@ -88,7 +79,6 @@ export type SermonCardData = {
   scripture: string;
   series: string;
   language: Language | "";
-  thumb: string;
   blurb: string;
 };
 
@@ -101,6 +91,5 @@ export const toCard = (s: Sermon): SermonCardData => ({
   scripture: s.scripture ?? "",
   series: s.series,
   language: s.language ?? "",
-  thumb: s.thumb,
   blurb: excerpt(s, 110),
 });

@@ -4,7 +4,6 @@ import { guard } from "@/lib/api";
 import { currentAdmin } from "@/lib/admin-auth";
 import { type Language, type StoredSermon, readStored, saveStored } from "@/lib/sermons";
 import { getSettings, updateSettings } from "@/lib/settings";
-import { parseYouTubeId } from "@/lib/youtube";
 
 export const dynamic = "force-dynamic";
 
@@ -31,19 +30,13 @@ async function handlePOST(req: Request) {
     ...(has("language") && { language: (body.language === "mizo" || body.language === "english" ? body.language : undefined) as Language | undefined }),
   };
 
-  if (has("youtube")) {
-    const raw = text(body.youtube, 300);
-    const id = raw ? parseYouTubeId(raw) : null;
-    if (raw && !id) return Response.json({ error: "link" }, { status: 400 });
-    merged.youtubeId = id ?? undefined;
-  }
   if (has("seriesId")) {
     const wanted = text(body.seriesId, 40);
     merged.seriesId = (await getSettings()).series.some((s) => s.id === wanted) ? wanted : undefined;
   }
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(merged.date) || !merged.title) return Response.json({ error: "missing" }, { status: 400 });
-  if (!merged.youtubeId && !merged.notes && !merged.text) return Response.json({ error: "empty" }, { status: 400 });
+  if (!merged.scripture && !merged.summary && !merged.notes && !merged.text) return Response.json({ error: "empty" }, { status: 400 });
 
   await saveStored([...all.filter((s) => s.id !== merged.id), merged]);
   revalidatePath("/", "layout");

@@ -74,8 +74,7 @@ Put a test folder in **Website Photos**, e.g. `2026-10-11 Harvest Thanksgiving`,
 
 ## How it works (for whoever maintains the code)
 
-- `lib/sermons.ts` keeps the sermons (a YouTube id plus preacher, scripture, series, summary, notes, language, hidden) in `sermons.json`, and `lib/settings.ts` keeps the series list, the pinned sermon, the Drive folder and the hidden albums in `settings.json` (in the Neon table, or `.data/` on your computer). `/admin` edits them (`lib/admin-auth.ts`: named logins from `ADMIN_USERS`, signed 12-hour cookie, shared lockout; API under `app/api/admin`).
-- `lib/youtube.ts` fills in a pasted link's title, thumbnail and date (YouTube oEmbed plus the watch page, no key).
+- `lib/sermons.ts` keeps the sermons (preacher, scripture, series, summary, notes, language, hidden) in `sermons.json`, and `lib/settings.ts` keeps the series list, the pinned sermon, the Drive folder and the hidden albums in `settings.json` (in the Neon table, or `.data/` on your computer). `/admin` edits them (`lib/admin-auth.ts`: named logins from `ADMIN_USERS`, signed 12-hour cookie, shared lockout; API under `app/api/admin`).
 - `app/api/counselling` adds form submissions to the private Sheet. It checks a hidden spam field, limits each visitor to 5 an hour, and never logs the message.
 - `lib/content.ts` reads the Sheet. Pages refresh every 2 minutes (`revalidate = 120`).
   If Google can't be reached, the last good version of the page stays up.

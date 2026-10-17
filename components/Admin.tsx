@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export type AdminSermon = {
-  id: string; date: string; title: string; youtubeId: string; preacher: string; scripture: string; seriesId: string;
-  language: "mizo" | "english" | ""; summary: string; notes: string; hidden: boolean; pinned: boolean; thumb: string;
+  id: string; date: string; title: string; preacher: string; scripture: string; seriesId: string;
+  language: "mizo" | "english" | ""; summary: string; notes: string; hidden: boolean; pinned: boolean;
 };
 export type AdminAlbum = { key: string; title: string; date: string; count: number; cover: string; hidden: boolean };
 type Series = { id: string; name: string };
@@ -96,39 +96,25 @@ function Login() {
 // ── Sermons ─────────────────────────────────────────────
 
 const today = () => new Date().toISOString().slice(0, 10);
-const blank = (): AdminSermon => ({ id: "", date: today(), title: "", youtubeId: "", preacher: "", scripture: "", seriesId: "", language: "", summary: "", notes: "", hidden: false, pinned: false, thumb: "" });
+const blank = (): AdminSermon => ({ id: "", date: today(), title: "", preacher: "", scripture: "", seriesId: "", language: "", summary: "", notes: "", hidden: false, pinned: false });
 
 function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Series[] }) {
   const router = useRouter();
   const [form, setForm] = useState<AdminSermon>(blank);
-  const [link, setLink] = useState("");
-  const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+    const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [looking, setLooking] = useState(false);
   const set = <K extends keyof AdminSermon>(k: K, v: AdminSermon[K]) => setForm((f) => ({ ...f, [k]: v }));
   const editing = Boolean(form.id);
-
-  async function fill(url: string) {
-    if (!url.trim()) return;
-    setLooking(true);
-    setNote(null);
-    const r = await call(`/api/admin/lookup?url=${encodeURIComponent(url.trim())}`, "GET");
-    setLooking(false);
-    if (!r.ok) return setNote({ ok: false, text: failText(r, { link: "That doesn't look like a YouTube link.", video: "YouTube couldn't find that video. Is it private or deleted?" }) });
-    setForm((f) => ({ ...f, youtubeId: r.json.id, thumb: r.json.thumb, title: f.title || r.json.title, date: r.json.date && !editing ? r.json.date : f.date }));
-    setNote({ ok: true, text: "Title and thumbnail filled in. Check them, then add the preacher and scripture." });
-  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setNote(null);
-    const { id, date, title, preacher, scripture, seriesId, language, summary, notes, youtubeId } = form;
-    const r = await call("/api/admin/sermons", "POST", { id, date, title, preacher, scripture, seriesId, language, summary, notes, youtube: youtubeId });
+    const { id, date, title, preacher, scripture, seriesId, language, summary, notes } = form;
+    const r = await call("/api/admin/sermons", "POST", { id, date, title, preacher, scripture, seriesId, language, summary, notes });
     setBusy(false);
-    if (!r.ok) return setNote({ ok: false, text: failText(r, { missing: "Please fill in the title and date.", empty: "Add a YouTube link or some notes.", link: "That doesn't look like a YouTube link." }) });
+    if (!r.ok) return setNote({ ok: false, text: failText(r, { missing: "Please fill in the title and date.", empty: "Add a scripture, summary or some notes." }) });
     setForm(blank());
-    setLink("");
     setNote({ ok: true, text: "Saved. It is on the website now." });
     router.refresh();
   }
@@ -143,7 +129,6 @@ function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Serie
 
   function edit(s: AdminSermon) {
     setForm(s);
-    setLink(s.youtubeId ? `https://youtu.be/${s.youtubeId}` : "");
     setNote(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -152,42 +137,6 @@ function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Serie
     <>
       <form className="panel" onSubmit={save} key={form.id || "new"}>
         <h2>{editing ? "Edit sermon" : "Add a sermon"}</h2>
-
-        <div className="field">
-          YouTube link
-          <div className="lookup">
-            <input
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              onPaste={(e) => {
-                const text = e.clipboardData.getData("text");
-                setLink(text);
-                e.preventDefault();
-                fill(text);
-              }}
-              placeholder="Paste a link, e.g. https://youtu.be/…"
-              inputMode="url"
-              aria-label="YouTube link"
-            />
-            <button type="button" className="btn btn-light" onClick={() => fill(link)} disabled={looking || !link.trim()}>
-              {looking ? "Looking…" : "Fill in"}
-            </button>
-          </div>
-          <span className="hint">The title, thumbnail and date fill in by themselves.</span>
-        </div>
-
-        {form.youtubeId && (
-          <div className="preview">
-            <img src={form.thumb || `https://i.ytimg.com/vi/${form.youtubeId}/hqdefault.jpg`} alt="" />
-            <div>
-              <b>{form.title || "Untitled"}</b>
-              <br />
-              <button type="button" className="linkbtn" onClick={() => (set("youtubeId", ""), set("thumb", ""), setLink(""))}>
-                Remove video
-              </button>
-            </div>
-          </div>
-        )}
 
         <div className="form-grid">
           <label className="field wide">
@@ -237,8 +186,8 @@ function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Serie
           <button className="btn btn-dark" disabled={busy}>
             {busy ? "Saving…" : editing ? "Save changes" : "Publish"}
           </button>
-          {(editing || link || form.title) && (
-            <button type="button" className="btn btn-ghost" onClick={() => (setForm(blank()), setLink(""), setNote(null))}>
+          {(editing || form.title) && (
+            <button type="button" className="btn btn-ghost" onClick={() => (setForm(blank()), setNote(null))}>
               {editing ? "Cancel" : "Clear"}
             </button>
           )}
@@ -252,8 +201,7 @@ function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Serie
         <ul className="manage-list">
           {sermons.map((s) => (
             <li key={s.id} className={s.hidden ? "is-hidden" : undefined}>
-              {s.thumb ? <img className="thumb" src={s.thumb} alt="" /> : <span className="thumb" />}
-              <span className="info">
+                            <span className="info">
                 <b>
                   {s.title} {s.pinned && <span className="chip dark">Pinned</span>} {s.hidden && <span className="chip">Hidden</span>}
                 </b>

@@ -3,20 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { SermonCardData } from "@/lib/sermons";
-import { Book, PlayFill, Search } from "./icons";
+import { Book, Search } from "./icons";
 
 export function SermonCard({ s, showSeries = true }: { s: SermonCardData; showSeries?: boolean }) {
   return (
     <Link href={`/sermons/${s.slug}`} className="sermon-card">
-      <span className={s.thumb ? "thumb" : "thumb text"}>
-        {s.thumb ? (
-          <>
-            <img src={s.thumb} alt="" loading="lazy" />
-            <i className="play"><PlayFill /></i>
-          </>
-        ) : (
-          <Book />
-        )}
+      <span className="thumb text">
+        <Book />
       </span>
       <div className="meta">
         <span>{s.dateLabel}</span>
