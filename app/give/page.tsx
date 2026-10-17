@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import QRCode from "qrcode";
 import { getContent } from "@/lib/content";
 import { PageShell } from "@/components/PageShell";
+import { ComingSoon } from "@/components/ComingSoon";
+import { isSoon } from "@/content/nav";
 
 export const metadata: Metadata = { title: "Give" };
 export const revalidate = 120;
 
 export default async function GivePage() {
+  if (isSoon("/give")) return <ComingSoon title="Give" />;
   const { site, give } = await getContent();
   const upiLink = give.upi ? `upi://pay?pa=${encodeURIComponent(give.upi)}&pn=${encodeURIComponent(give.accountName || site.name)}&cu=INR` : "";
   const qr = upiLink ? await QRCode.toDataURL(upiLink, { margin: 1, width: 320, color: { dark: "#00265a", light: "#ffffff" } }) : "";

@@ -156,14 +156,6 @@ function SermonsTab({ sermons, series }: { sermons: AdminSermon[]; series: Serie
             Date
             <input type="date" value={form.date} onChange={(e) => set("date", e.target.value)} required />
           </label>
-          <label className="field">
-            Language
-            <select value={form.language} onChange={(e) => set("language", e.target.value as AdminSermon["language"])}>
-              <option value="">Not set</option>
-              <option value="mizo">Mizo</option>
-              <option value="english">English</option>
-            </select>
-          </label>
           <label className="field wide">
             Series
             <select value={form.seriesId} onChange={(e) => set("seriesId", e.target.value)}>

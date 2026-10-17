@@ -6,7 +6,7 @@ export const links: { href: string; label: string; soon?: boolean }[] = [
   { href: "/", label: "Home" },
   { href: "/photos", label: "Photos" },
   { href: "/sermons", label: "Sermons" },
-  { href: "/give", label: "Give" },
+  { href: "/give", label: "Give", soon: true },
   { href: "/missions", label: "Missions", soon: true },
   { href: "/sections", label: "Sections", soon: true },
   { href: "/counselling", label: "Counselling", soon: true },

@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { SermonCardData } from "@/lib/sermons";
-import { Book, Search } from "./icons";
+import { Search } from "./icons";
 
 export function SermonCard({ s, showSeries = true }: { s: SermonCardData; showSeries?: boolean }) {
   return (
-    <Link href={`/sermons/${s.slug}`} className="sermon-card">
-      <span className="thumb text">
-        <Book />
-      </span>
+    <Link href={`/sermons/${s.slug}`} className="sermon-row">
       <div className="meta">
         <span>{s.dateLabel}</span>
-        {s.language && <span className="chip">{s.language === "mizo" ? "Mizo" : "English"}</span>}
         {showSeries && s.series && <span className="chip dark">{s.series}</span>}
       </div>
       <h3>{s.title}</h3>
@@ -31,13 +27,11 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
   const [preacher, setPreacher] = useState("");
   const [series, setSeries] = useState("");
   const [year, setYear] = useState("");
-  const [language, setLanguage] = useState("");
   const [view, setView] = useState<"all" | "series">("all");
 
   const preachers = useMemo(() => unique(sermons.map((s) => s.preacher)), [sermons]);
   const seriesNames = useMemo(() => unique(sermons.map((s) => s.series)), [sermons]);
   const years = useMemo(() => unique(sermons.map((s) => s.date.slice(0, 4))).reverse(), [sermons]);
-  const showLanguage = new Set(sermons.map((s) => s.language).filter(Boolean)).size > 1;
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -46,10 +40,9 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
         (!preacher || s.preacher === preacher) &&
         (!series || s.series === series) &&
         (!year || s.date.startsWith(year)) &&
-        (!language || s.language === language) &&
         (!needle || [s.title, s.preacher, s.scripture, s.series, s.blurb].some((f) => f.toLowerCase().includes(needle)))
     );
-  }, [sermons, q, preacher, series, year, language]);
+  }, [sermons, q, preacher, series, year]);
 
   const groups = useMemo(() => {
     const map = new Map<string, SermonCardData[]>();
@@ -58,8 +51,8 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
     return [...map.entries()].sort(([a], [b]) => Number(a === "Single messages") - Number(b === "Single messages"));
   }, [shown]);
 
-  const filtered = Boolean(q || preacher || series || year || language);
-  const clear = () => (setQ(""), setPreacher(""), setSeries(""), setYear(""), setLanguage(""));
+  const filtered = Boolean(q || preacher || series || year);
+  const clear = () => (setQ(""), setPreacher(""), setSeries(""), setYear(""));
 
   return (
     <>
@@ -77,15 +70,6 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
           <option value="">Any year</option>
           {years.map((p) => <option key={p}>{p}</option>)}
         </select>
-        {showLanguage ? (
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} aria-label="Language">
-            <option value="">Mizo &amp; English</option>
-            <option value="mizo">Mizo</option>
-            <option value="english">English</option>
-          </select>
-        ) : (
-          <span />
-        )}
       </div>
 
       <div className="filter-bar">
@@ -108,7 +92,7 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
       {shown.length === 0 && <p className="tip">{sermons.length === 0 ? "Sermons will appear here soon." : "No sermons match. Try clearing a filter."}</p>}
 
       {view === "all" ? (
-        <ul className="sermon-grid">
+        <ul className="sermon-list">
           {shown.map((s) => (
             <li key={s.slug}><SermonCard s={s} /></li>
           ))}
@@ -120,7 +104,7 @@ export function SermonBrowser({ sermons }: { sermons: SermonCardData[] }) {
               {name}
               <small>{items.length} {items.length === 1 ? "message" : "messages"}</small>
             </h2>
-            <ul className="sermon-grid">
+            <ul className="sermon-list">
               {items.map((s) => (
                 <li key={s.slug}><SermonCard s={s} showSeries={false} /></li>
               ))}

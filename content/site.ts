@@ -25,7 +25,6 @@ export const site = {
   },
 
   social: {
-    facebook: "https://www.facebook.com/SalvationArmyIET/", // India Eastern Territory page. Swap for the corps' own page if it has one
     youtube: "https://www.youtube.com/@BawngkawnCorps-mu3lf",
     instagram: "https://www.instagram.com/bawngkawn_corps/",
   },

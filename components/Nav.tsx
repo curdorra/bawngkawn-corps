@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { site } from "@/content/site";
 import { links } from "@/content/nav";
-import { Close, Facebook, Instagram, Menu, YouTube } from "./icons";
+import { Close, Instagram, Menu, YouTube } from "./icons";
 
 export function Brand() {
   return (
@@ -24,7 +24,6 @@ type Social = typeof site.social;
 
 export function Socials({ social }: { social: Social }) {
   const items = [
-    { href: social.facebook, label: "Facebook", icon: <Facebook /> },
     { href: social.youtube, label: "YouTube", icon: <YouTube /> },
     { href: social.instagram, label: "Instagram", icon: <Instagram /> },
   ].filter((i) => i.href);

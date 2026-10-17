@@ -4,7 +4,7 @@ import { googleConfigured, googleFetch } from "./google";
 // Reads the "Website" Google Sheet. Each tab replaces one part of content/site.ts.
 // A missing tab (or no sheet at all) just means the defaults in content/site.ts are used.
 //
-//   Contact   Field | Value              (Phone, Email, WhatsApp, Address, Map link, Facebook, YouTube, Instagram)
+//   Contact   Field | Value              (Phone, Email, WhatsApp, Address, Map link, YouTube, Instagram)
 //   Officers  Role | Rank | Name
 //   Meetings  Day | Meeting | Time
 //   Sections  Name | Description   (an older tab called Groups works too)
@@ -38,7 +38,6 @@ export async function getContent() {
     const wa = get("WhatsApp");
     if (wa !== undefined) c.whatsapp = /^\+?[\d\s-]+$/.test(wa) ? `https://wa.me/${wa.replace(/\D/g, "")}` : wa;
     const s = content.site.social;
-    s.facebook = get("Facebook") ?? s.facebook;
     s.youtube = get("YouTube") ?? s.youtube;
     s.instagram = get("Instagram") ?? s.instagram;
   }

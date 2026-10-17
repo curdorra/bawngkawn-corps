@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatDate } from "@/lib/albums";
-import { getSermon, languageLabel, listSermons } from "@/lib/sermons";
+import { getSermon, listSermons } from "@/lib/sermons";
 import { PageShell } from "@/components/PageShell";
 import { ShareButtons } from "@/components/ShareButtons";
 import { ArrowLeft } from "@/components/icons";
@@ -35,7 +35,6 @@ export default async function SermonPage({ params }: Params) {
     ["Preacher", s.preacher],
     ["Scripture", s.scripture],
     ["Series", s.series],
-    ["Language", languageLabel(s.language)],
   ].filter(([, v]) => v);
 
   return (
