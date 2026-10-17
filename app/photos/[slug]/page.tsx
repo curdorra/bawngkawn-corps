@@ -42,7 +42,7 @@ export default async function AlbumPage({ params }: Params) {
             {formatDate(album.date)} · {photoCount(album.photos.length)}
           </p>
           <h1 className="h2">{album.title}</h1>
-          <AlbumActions title={album.title} />
+          <AlbumActions slug={album.slug} title={album.title} photos={album.photos} />
         </div>
       </header>
       <main className="section" style={{ paddingTop: 40 }}>

@@ -1,7 +1,8 @@
 import { revalidatePath } from "next/cache";
-import { guard } from "@/lib/api";
+import { after } from "next/server";
 import { currentAdmin } from "@/lib/admin-auth";
-import { driveConfigured, listAlbumFolders } from "@/lib/drive";
+import { listAlbumFolders } from "@/lib/drive";
+import { googleConfigured } from "@/lib/google";
 import { readStored } from "@/lib/sermons";
 import { getSettings, updateSettings } from "@/lib/settings";
 import { syncPhotos } from "@/lib/sync";
@@ -10,8 +11,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /** Pin or unpin the featured sermon, hide or show albums, or choose the Drive photo folder. */
-export const POST = (req: Request) => guard(() => handlePOST(req));
-async function handlePOST(req: Request) {
+export async function POST(req: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "login" }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const settings = await getSettings();
@@ -32,7 +32,7 @@ async function handlePOST(req: Request) {
     const raw = typeof body.driveFolder === "string" ? body.driveFolder.trim() : "";
     const id = raw.match(/folders\/([\w-]+)/)?.[1] ?? raw.match(/^[\w-]{10,}$/)?.[0] ?? "";
     if (raw && !id) return Response.json({ error: "folder" }, { status: 400 });
-    if (id && driveConfigured()) {
+    if (id && googleConfigured()) {
       // Make sure the robot account can actually see it before switching.
       try {
         await listAlbumFolders(id);
@@ -41,7 +41,7 @@ async function handlePOST(req: Request) {
       }
     }
     await updateSettings({ driveFolderId: id });
-    await syncPhotos().catch(() => {});
+    after(() => syncPhotos({ budgetMs: 45_000 }).then(() => revalidatePath("/", "layout")));
   }
 
   revalidatePath("/", "layout");

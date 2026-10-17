@@ -366,10 +366,10 @@ function PhotosTab({ albums, driveFolderId, envFolder }: { albums: AdminAlbum[];
         className="panel"
         onSubmit={(e) => {
           e.preventDefault();
-          if (folder.trim() !== driveFolderId && !confirm("Switch to this folder? The website will show the albums from the new folder instead.")) return;
-          run(() => call("/api/admin/settings", "POST", { driveFolder: folder }), "Saved. The new folder is on the site now.", {
+          if (folder.trim() !== driveFolderId && !confirm("Switch to this folder? Albums from the old folder will be removed from the website and the new ones copied in. This can take a few minutes.")) return;
+          run(() => call("/api/admin/settings", "POST", { driveFolder: folder }), "Saved. The new folder is being copied in; refresh in a minute or two.", {
             folder: "That doesn't look like a Drive folder link.",
-            access: "The website can't open that folder. Check the link, and that the folder is shared as \"anyone with the link\".",
+            access: "The website can't open that folder. Share it with the website's service account email first.",
           });
         }}
       >
@@ -377,11 +377,11 @@ function PhotosTab({ albums, driveFolderId, envFolder }: { albums: AdminAlbum[];
         <label className="field">
           Google Drive folder
           <input value={folder} onChange={(e) => setFolder(e.target.value)} placeholder={envFolder ? "Using the site's default folder" : "Paste the folder's link"} />
-          <span className="hint">Each folder inside it becomes an album. Share the folder as &ldquo;anyone with the link&rdquo; (Viewer), so photos can show on the site, then paste its link here. Leave empty to use the default.</span>
+          <span className="hint">Each folder inside it becomes an album. Share the folder with the website's service account (as Viewer), then paste its link here. Leave empty to use the default.</span>
         </label>
         <div className="btn-row">
           <button className="btn btn-dark" disabled={busy}>Save folder</button>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => call("/api/admin/albums", "POST"), "Checked Drive. Anything new is on the site now.", { drive: "Drive isn't set up yet: add GOOGLE_API_KEY (or the Google service account) and choose a folder." })}>
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => call("/api/admin/albums", "POST"), "Checked Drive. Anything new is on the site now.", { drive: "Drive isn't set up yet: add the Google service account and R2 settings, and choose a folder." })}>
             {busy ? "Working…" : "Check Drive now"}
           </button>
         </div>

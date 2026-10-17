@@ -19,17 +19,12 @@ function saveBlob(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(href), 10_000);
 }
 
-// On phones, the share sheet has "Save Image", which puts the photo straight into the gallery.
-// Elsewhere it is a normal download. If the browser won't let us fetch the file from Google, we
-// just open the full-quality photo in a new tab so it can be saved from there.
+// Photos live on a separate storage domain, so we fetch them first; a plain
+// download link would just open the image instead of saving it.
+// On phones, the share sheet has "Save Image", which puts the photo straight
+// into the gallery. Everywhere else, a normal full-quality download.
 async function savePhoto(url: string, name: string) {
-  let blob: Blob;
-  try {
-    blob = await (await fetch(url)).blob();
-  } catch {
-    window.open(url, "_blank", "noopener");
-    return;
-  }
+  const blob = await (await fetch(url)).blob();
   const file = new File([blob], name, { type: blob.type || "image/jpeg" });
   const isTouch = window.matchMedia("(pointer: coarse)").matches;
   if (isTouch && navigator.canShare?.({ files: [file] })) {
@@ -43,8 +38,33 @@ async function savePhoto(url: string, name: string) {
   saveBlob(blob, name);
 }
 
-export function AlbumActions({ title }: { title: string }) {
+export function AlbumActions({ slug, title, photos }: Props) {
+  const [progress, setProgress] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+
+  async function downloadAll() {
+    setProgress(0);
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      let done = 0;
+      // A few at a time, so slow mobile connections don't stall.
+      for (let i = 0; i < photos.length; i += 4) {
+        await Promise.all(
+          photos.slice(i, i + 4).map(async (p, j) => {
+            const blob = await (await fetch(p.original)).blob();
+            zip.file(fileName(slug, i + j), blob);
+            setProgress(Math.round((++done / photos.length) * 100));
+          })
+        );
+      }
+      saveBlob(await zip.generateAsync({ type: "blob", compression: "STORE" }), `${slug}.zip`);
+    } catch {
+      alert("Sorry, the download didn't finish. Please check your connection and try again.");
+    } finally {
+      setProgress(null);
+    }
+  }
 
   async function share() {
     const url = window.location.href;
@@ -61,6 +81,10 @@ export function AlbumActions({ title }: { title: string }) {
 
   return (
     <div className="album-actions">
+      <button className="btn btn-light" onClick={downloadAll} disabled={progress !== null}>
+        <Download />
+        {progress === null ? `Download all (${photos.length})` : `Preparing… ${progress}%`}
+      </button>
       <button className="btn btn-ghost" onClick={share}>
         <Share />
         {copied ? "Link copied!" : "Share album"}
