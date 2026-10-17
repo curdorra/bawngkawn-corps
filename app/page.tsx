@@ -99,7 +99,8 @@ export default async function Home() {
           <div>
             <p className="kicker">Luka 14:22</p>
             <h2>Hmun a la awm.</h2>
-            <p className="lead" style={{ marginTop: 12 }}>&ldquo;Sir, what you ordered has been done, and still there is room.&rdquo;</p>
+            <p className="kicker" style={{ marginTop: 24 }}>Luke 14:22</p>
+            <h2>There is Still Room</h2>
           </div>
           <ul className="feature-list">
             {features.map((f) => (
