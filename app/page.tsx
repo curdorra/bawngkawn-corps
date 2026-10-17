@@ -1,15 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import { after } from "next/server";
 import { getContent } from "@/lib/content";
-import { formatDate, getAlbums, latestPhotos } from "@/lib/albums";
+import { getAlbums, latestPhotos } from "@/lib/albums";
 import { listSermons, pickFeatured, toCard } from "@/lib/sermons";
 import { syncIfStale } from "@/lib/sync";
 import { Footer, Header } from "@/components/Nav";
 import { AlbumCard } from "@/components/AlbumCard";
 import { LatestPhotos } from "@/components/AlbumViewer";
 import { SermonCard } from "@/components/SermonBrowser";
-import { ArrowUpRight, Book, Camera, Heart, Pin, PlayFill, Star } from "@/components/icons";
+import { ArrowUpRight, Book, Camera, Heart, Pin } from "@/components/icons";
 
 // Refresh every few minutes so new albums and sermons show up on their own.
 export const revalidate = 120;
@@ -136,49 +135,6 @@ export default async function Home() {
               <Pin /> {site.contact.address}
             </a>
           </p>
-        </div>
-      </section>
-
-      {/* ── Hero, at the bottom ── */}
-      <section className="hero" style={{ paddingTop: "clamp(40px, 6vw, 72px)" }}>
-        <div className="wrap">
-          <div className="hero-panel">
-            <div>
-              <p className="kicker">The Salvation Army · Aizawl</p>
-              <h2 className="hero-title">
-                {site.hero.titleLine1} <em>{site.hero.titleLine2}</em>
-              </h2>
-              <p className="lead">{site.hero.subtitle}</p>
-              <div className="btn-row">
-                <Link href={featured ? `/sermons/${featured.slug}` : "/sermons"} className="btn btn-dark">
-                  {featured ? "Watch latest sermon" : "Sermons"} <ArrowUpRight />
-                </Link>
-                <Link href="/photos" className="btn btn-ghost">
-                  See photos
-                </Link>
-              </div>
-            </div>
-            <div className="hero-art">
-              <div className="hero-arch">
-                <Image src="/images/site/hero.jpg" alt="" fill sizes="(max-width: 960px) 90vw, 460px" />
-              </div>
-              {featured && (
-                <Link href={`/sermons/${featured.slug}`} className="pinned">
-                  <span className="thumb">
-                    {featured.thumb && <img src={featured.thumb} alt="" />}
-                    <i className="play">
-                      <PlayFill />
-                    </i>
-                  </span>
-                  <span className="tag">
-                    <Star /> {featured.featured ? "Pinned sermon" : "Latest sermon"}
-                  </span>
-                  <b>{featured.title}</b>
-                  <small>{[featured.preacher, formatDate(featured.date)].filter(Boolean).join(" · ")}</small>
-                </Link>
-              )}
-            </div>
-          </div>
         </div>
       </section>
 
