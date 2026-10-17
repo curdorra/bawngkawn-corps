@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
+import { guard } from "@/lib/api";
 import { currentAdmin } from "@/lib/admin-auth";
 import { type Language, type StoredSermon, readStored, saveStored } from "@/lib/sermons";
 import { getSettings, updateSettings } from "@/lib/settings";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 const text = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\r\n/g, "\n").trim().slice(0, max) : "");
 
 /** Add a sermon, or change one when an id is given. Only the fields sent are changed. */
-export async function POST(req: Request) {
+export const POST = (req: Request) => guard(() => handlePOST(req));
+async function handlePOST(req: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "login" }, { status: 401 });
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const all = await readStored();
@@ -48,7 +50,8 @@ export async function POST(req: Request) {
   return Response.json({ ok: true, id: merged.id });
 }
 
-export async function DELETE(req: Request) {
+export const DELETE = (req: Request) => guard(() => handleDELETE(req));
+async function handleDELETE(req: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "login" }, { status: 401 });
   const id = new URL(req.url).searchParams.get("id");
   await saveStored((await readStored()).filter((s) => s.id !== id));

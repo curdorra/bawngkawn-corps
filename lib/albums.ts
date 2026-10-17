@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getObject, r2Configured } from "./r2";
+import { readJson } from "./store";
 import { getSettings } from "./settings";
 
 export type Photo = {
@@ -24,11 +24,10 @@ export type Manifest = { checkedAt: string; albums: Album[] };
 
 export const MANIFEST_KEY = "manifest.json";
 
-// Photos come from Google Drive (copied to R2 by lib/sync.ts) when R2 is set up.
-// Without it, e.g. on your own computer, they come from the folders in public/photos.
+// Photos come from the Google Drive folder (listed by lib/sync.ts) once it is set up.
 // Albums hidden in the admin area are left out unless asked for.
 export async function getAlbums({ includeHidden = false } = {}): Promise<Album[]> {
-  const [albums, { hiddenAlbums }] = await Promise.all([r2Configured() ? readManifestAlbums() : readLocalAlbums(), getSettings()]);
+  const [albums, { hiddenAlbums }] = await Promise.all([readManifestAlbums(), getSettings()]);
   const hidden = new Set(hiddenAlbums);
   return albums
     .filter((a) => a.photos.length > 0 && (includeHidden || !hidden.has(albumKey(a))))
@@ -49,9 +48,10 @@ export async function getAlbum(slug: string) {
   return (await getAlbums()).find((a) => a.slug === slug);
 }
 
+// The list saved by lib/sync.ts. Until a first sync has run (e.g. on your own computer), the folders in public/photos are used.
 async function readManifestAlbums(): Promise<Album[]> {
-  const raw = await getObject(MANIFEST_KEY);
-  return raw ? (JSON.parse(raw) as Manifest).albums : [];
+  const manifest = await readJson<Manifest | null>(MANIFEST_KEY, null);
+  return manifest ? manifest.albums : readLocalAlbums();
 }
 
 // ── Folder names → title + date ─────────────────────────────

@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
+import { guard } from "@/lib/api";
 import { currentAdmin } from "@/lib/admin-auth";
 import { readStored, saveStored } from "@/lib/sermons";
 import { getSettings, updateSettings } from "@/lib/settings";
@@ -7,7 +8,8 @@ import { getSettings, updateSettings } from "@/lib/settings";
 export const dynamic = "force-dynamic";
 
 /** Create a series, or rename one when an id is given. */
-export async function POST(req: Request) {
+export const POST = (req: Request) => guard(() => handlePOST(req));
+async function handlePOST(req: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "login" }, { status: 401 });
   const { id, name } = (await req.json().catch(() => ({}))) as { id?: unknown; name?: unknown };
   const clean = typeof name === "string" ? name.trim().slice(0, 100) : "";
@@ -22,7 +24,8 @@ export async function POST(req: Request) {
 }
 
 /** Deleting a series keeps its sermons; they just stop belonging to a series. */
-export async function DELETE(req: Request) {
+export const DELETE = (req: Request) => guard(() => handleDELETE(req));
+async function handleDELETE(req: Request) {
   if (!(await currentAdmin())) return Response.json({ error: "login" }, { status: 401 });
   const id = new URL(req.url).searchParams.get("id");
   const { series } = await getSettings();

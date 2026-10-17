@@ -1,4 +1,4 @@
-# One-time setup: Google Sheet, Drive photos, Cloudflare R2, Vercel
+# One-time setup: Drive photos, Neon database, Vercel (and optionally the Google Sheet)
 
 About 45 minutes. Do it all while signed in with the **church's** Google account, not a personal one,
 so the site keeps working after you hand it over.
@@ -29,8 +29,10 @@ so the site keeps working after you hand it over.
 ## 3. The photos folder
 
 1. Create a Drive folder **Website Photos**.
-2. **Share** it with the robot's email as **Viewer**, and with each photographer as **Editor**.
-3. Copy the ID from the URL: `drive.google.com/drive/folders/`**`THIS_PART`** → `GOOGLE_DRIVE_FOLDER_ID`.
+2. **Share** it with each photographer as **Editor**, and set **General access** to **Anyone with the link → Viewer**.
+   The site shows photos straight from Drive, so they must be viewable by link. (Only share photos you are happy to be public. Avoid children's photos unless parents agreed.)
+3. Let the site read the folder list: either create a Google API key (Google Cloud → APIs & Services → enable **Google Drive API** → Credentials → **API key**) → `GOOGLE_API_KEY`, or share the folder with the robot's email as Viewer if you set the robot up in step 1.
+4. Copy the ID from the URL: `drive.google.com/drive/folders/`**`THIS_PART`** → `GOOGLE_DRIVE_FOLDER_ID`.
 
 ### 3b. The counselling requests Sheet
 
@@ -52,26 +54,15 @@ Put the two or three people who may edit in `ADMIN_USERS` (Vercel → Settings �
 They sign in at `/admin`. After 10 wrong guesses in 15 minutes, nobody can try for 15 minutes. Removing someone from `ADMIN_USERS` signs them out.
 Optionally set `AUTH_SECRET` to any long random text (it signs the login cookie).
 
-## 4. Cloudflare R2: where the website's copies of the photos live
+## 4. Neon database: where sermons, series and settings are saved
 
-1. Sign up at <https://dash.cloudflare.com> → **R2** → enable it (asks for a card, but there's a free allowance).
-2. **Create bucket** `bawngkawn-photos` → `R2_BUCKET`.
-3. Bucket → **Settings → Public access** → enable the **r2.dev** URL (or connect a custom domain later).
-   That URL → `R2_PUBLIC_URL`.
-4. Bucket → **Settings → CORS policy** → paste (with your real site address):
-   ```json
-   [{ "AllowedOrigins": ["https://YOUR-SITE.vercel.app", "http://localhost:3001"],
-      "AllowedMethods": ["GET"], "AllowedHeaders": ["*"], "MaxAgeSeconds": 3600 }]
-   ```
-   Without this, "Save photo" and "Download all" won't work.
-5. **R2 → Manage API tokens → Create API token** → *Object Read & Write*, only this bucket.
-   Copy **Access Key ID** → `R2_ACCESS_KEY_ID`, **Secret Access Key** → `R2_SECRET_ACCESS_KEY`.
-   Your **Account ID** (shown on the R2 overview page) → `R2_ACCOUNT_ID`.
+In Vercel, open the project → **Storage** → **Create Database** → **Neon** (free plan is plenty).
+Connect it to the project. This adds `DATABASE_URL` for you. The site creates its one small table by itself.
 
 ## 5. Vercel
 
 1. Put this folder on GitHub (private repo), then in Vercel **Add New → Project** → import it.
-2. **Settings → Environment Variables**: add everything from `.env.example`.
+2. **Settings → Environment Variables**: add what you need from `.env.example` (`ADMIN_USERS`, `GOOGLE_API_KEY`, `CRON_SECRET`, ...).
    For `CRON_SECRET`, make up a long random password.
 3. Deploy.
 
@@ -79,21 +70,15 @@ Optionally set `AUTH_SECRET` to any long random text (it signs the login cookie)
 
 Put a test folder in **Website Photos**, e.g. `2026-10-11 Harvest Thanksgiving`, with a few photos. Then either:
 - just open the website and wait ~5 minutes, or
-- visit `https://YOUR-SITE.vercel.app/api/sync?key=YOUR_CRON_SECRET` to sync right away.
-  It reports what it did. If `pending` is above 0, open it again until it's 0.
+- sign in at `/admin` → Photos → **Check Drive now**, or visit `https://YOUR-SITE.vercel.app/api/sync?key=YOUR_CRON_SECRET`.
 
 ## How it works (for whoever maintains the code)
 
-- `lib/sermons.ts` keeps the sermons (a YouTube id plus preacher, scripture, series, summary, notes, language, hidden) in `sermons.json`, and `lib/settings.ts` keeps the series list, the pinned sermon, the Drive folder and the hidden albums in `settings.json` (R2 on the live site, `.data/` on your computer). `/admin` edits them (`lib/admin-auth.ts`: named logins from `ADMIN_USERS`, signed 12-hour cookie, shared lockout; API under `app/api/admin`).
+- `lib/sermons.ts` keeps the sermons (a YouTube id plus preacher, scripture, series, summary, notes, language, hidden) in `sermons.json`, and `lib/settings.ts` keeps the series list, the pinned sermon, the Drive folder and the hidden albums in `settings.json` (in the Neon table, or `.data/` on your computer). `/admin` edits them (`lib/admin-auth.ts`: named logins from `ADMIN_USERS`, signed 12-hour cookie, shared lockout; API under `app/api/admin`).
 - `lib/youtube.ts` fills in a pasted link's title, thumbnail and date (YouTube oEmbed plus the watch page, no key).
-- Storage is small JSON files rather than a database. That is fine for a handful of editors; if it ever outgrows that, only `lib/store.ts` callers (`lib/sermons.ts`, `lib/settings.ts`) need to change.
 - `app/api/counselling` adds form submissions to the private Sheet. It checks a hidden spam field, limits each visitor to 5 an hour, and never logs the message.
 - `lib/content.ts` reads the Sheet. Pages refresh every 2 minutes (`revalidate = 120`).
   If Google can't be reached, the last good version of the page stays up.
-- `lib/sync.ts` copies new Drive photos to R2 as original + 2000px preview + 600px thumbnail,
-  and keeps a list of albums in `manifest.json` in the bucket. It runs in the background after page
-  renders (at most every ~4 min), plus a daily Vercel cron, plus `/api/sync` on demand.
-  Each run stops after ~45 s and the next run continues, so large uploads are fine.
-- iPhone HEIC photos are converted using Google's own JPEG version.
-- `scripts/test-sync.mts` is a simulated end-to-end test: `npx tsx scripts/test-sync.mts`.
+- `lib/sync.ts` reads the Drive folder (`lib/drive.ts`, with `GOOGLE_API_KEY` or the robot account) and saves the list of albums and photo ids in the database (`manifest`). Nothing is copied: images load from Google (`lh3.googleusercontent.com/d/<id>=w600`) so the folder must be shared as "anyone with the link". It runs in the background after page renders (at most every ~4 min), plus a daily Vercel cron, plus `/api/sync` and the admin's "Check Drive now".
+- `lib/store.ts` is the only place that touches the database: one Neon table `kv(key, value jsonb)`. On your computer without `DATABASE_URL` it uses the `.data/` folder.
 - With no environment variables set, the site uses `content/site.ts` and `public/photos/`.

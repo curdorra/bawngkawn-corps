@@ -24,7 +24,7 @@ async function call(url: string, method: string, body?: unknown): Promise<Result
 
 const SORRY = "Sorry, that didn't work. Please try again.";
 const failText = (r: Result, special: Record<string, string> = {}) =>
-  r.status === 401 && r.json.error === "login" ? "Your login has expired. Please refresh the page and sign in again." : special[r.json.error] ?? (r.status === 0 ? "Please check your internet and try again." : SORRY);
+  r.status === 401 && r.json.error === "login" ? "Your login has expired. Please refresh the page and sign in again." : special[r.json.error] ?? (r.json.error === "storage" ? "Saving isn't set up on the live site yet: it needs a database. Add the Neon integration in Vercel (see setup/SETUP.md)." : r.status === 0 ? "Please check your internet and try again." : SORRY);
 
 export function Admin({ enabled, who, data }: { enabled: boolean; who: string | null; data: Data | null }) {
   const router = useRouter();
@@ -366,10 +366,10 @@ function PhotosTab({ albums, driveFolderId, envFolder }: { albums: AdminAlbum[];
         className="panel"
         onSubmit={(e) => {
           e.preventDefault();
-          if (folder.trim() !== driveFolderId && !confirm("Switch to this folder? Albums from the old folder will be removed from the website and the new ones copied in. This can take a few minutes.")) return;
-          run(() => call("/api/admin/settings", "POST", { driveFolder: folder }), "Saved. The new folder is being copied in; refresh in a minute or two.", {
+          if (folder.trim() !== driveFolderId && !confirm("Switch to this folder? The website will show the albums from the new folder instead.")) return;
+          run(() => call("/api/admin/settings", "POST", { driveFolder: folder }), "Saved. The new folder is on the site now.", {
             folder: "That doesn't look like a Drive folder link.",
-            access: "The website can't open that folder. Share it with the website's service account email first.",
+            access: "The website can't open that folder. Check the link, and that the folder is shared as \"anyone with the link\".",
           });
         }}
       >
@@ -377,11 +377,11 @@ function PhotosTab({ albums, driveFolderId, envFolder }: { albums: AdminAlbum[];
         <label className="field">
           Google Drive folder
           <input value={folder} onChange={(e) => setFolder(e.target.value)} placeholder={envFolder ? "Using the site's default folder" : "Paste the folder's link"} />
-          <span className="hint">Each folder inside it becomes an album. Share the folder with the website's service account (as Viewer), then paste its link here. Leave empty to use the default.</span>
+          <span className="hint">Each folder inside it becomes an album. Share the folder as &ldquo;anyone with the link&rdquo; (Viewer), so photos can show on the site, then paste its link here. Leave empty to use the default.</span>
         </label>
         <div className="btn-row">
           <button className="btn btn-dark" disabled={busy}>Save folder</button>
-          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => call("/api/admin/albums", "POST"), "Checked Drive. Anything new is on the site now.")}>
+          <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => run(() => call("/api/admin/albums", "POST"), "Checked Drive. Anything new is on the site now.", { drive: "Drive isn't set up yet: add GOOGLE_API_KEY (or the Google service account) and choose a folder." })}>
             {busy ? "Working…" : "Check Drive now"}
           </button>
         </div>
