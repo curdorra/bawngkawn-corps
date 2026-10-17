@@ -21,7 +21,7 @@ export default async function PhotosPage() {
           <h1 className="h2">
             Our <em>programmes</em>
           </h1>
-          <p className="lead">Photos from every programme, newest first. Open an album and tap a photo to save it.</p>
+          <p className="lead">The newest pictures from our programmes. Tap one to see it full screen, then swipe for more.</p>
         </div>
       </header>
       <main className="section">

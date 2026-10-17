@@ -9,7 +9,7 @@ export const revalidate = 120;
 export default async function SermonsPage() {
   const sermons = (await listSermons()).map(toCard);
   return (
-    <PageShell kicker="Sermons" title={<>Hear the <em>word</em></>} lead="Messages from our meetings. Search by preacher, scripture or series, and share any message with a friend.">
+    <PageShell kicker="Sermons" title="Corps chhung Sermon-te">
       <SermonBrowser sermons={sermons} />
     </PageShell>
   );

@@ -97,8 +97,8 @@ export default async function Home() {
       <section className="section">
         <div className="wrap features">
           <div>
-            <p className="kicker">What&apos;s here</p>
-            <h2>Everything from our corps, in one place.</h2>
+            <p className="kicker">Luka 14:22</p>
+            <h2>Hmun a la awm.</h2>
           </div>
           <ul className="feature-list">
             {features.map((f) => (

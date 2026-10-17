@@ -33,11 +33,11 @@ export const site = {
 
 // Weekly meetings. PLACEHOLDER times: please check them.
 export const meetings = [
-  { day: "Sunday", name: "Holiness Meeting", time: "10:00 AM" },
+  { day: "Sunday", name: "Thianghlimna Inkhawm", time: "10:00 AM" },
   { day: "Sunday", name: "Sunday School", time: "12:00 PM" },
-  { day: "Sunday", name: "Salvation Meeting", time: "6:00 PM" },
-  { day: "Wednesday", name: "Prayer Meeting", time: "6:00 PM" },
-  { day: "Friday", name: "Youth Fellowship", time: "6:30 PM" },
+  { day: "Sunday", name: "Chhandamna Inkhawm", time: "7:15 PM" },
+  { day: "Wednesday", name: "Sipai Inkhawm", time: "7:15 PM" },
+  { day: "Saturday", name: "Tawngṭai Inkhawm", time: "7:15 PM" },
 ];
 
 // Corps sections. Photos are in public/images/site/
