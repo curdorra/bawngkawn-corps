@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: "Photos, sermons and meeting times from The Salvation Army Bawngkawn Corps, Aizawl, Mizoram.",
 };
 
-export const viewport: Viewport = { themeColor: "#00265a" };
+export const viewport: Viewport = { themeColor: "#f7f4ef" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

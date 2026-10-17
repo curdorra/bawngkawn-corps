@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ComingSoon } from "@/components/ComingSoon";
+import { isSoon } from "@/content/nav";
 import Image from "next/image";
 import { getContent } from "@/lib/content";
 import { Footer, Header } from "@/components/Nav";
@@ -7,6 +9,7 @@ export const metadata: Metadata = { title: "About" };
 export const revalidate = 120;
 
 export default async function AboutPage() {
+  if (isSoon("/about")) return <ComingSoon title="About" />;
   const { site, about } = await getContent();
   return (
     <>

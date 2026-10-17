@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ComingSoon } from "@/components/ComingSoon";
+import { isSoon } from "@/content/nav";
 import Image from "next/image";
 import { getContent } from "@/lib/content";
 import { PageShell } from "@/components/PageShell";
@@ -7,6 +9,7 @@ export const metadata: Metadata = { title: "Sections" };
 export const revalidate = 120;
 
 export default async function SectionsPage() {
+  if (isSoon("/sections")) return <ComingSoon title="Sections" />;
   const { groups } = await getContent();
   return (
     <PageShell kicker="Sections" title={<>Find your <em>place</em></>} lead="There is a section for every age. Speak to any of our leaders after the meeting.">

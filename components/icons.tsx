@@ -80,3 +80,63 @@ export const Pin = () => (
     <circle cx="8" cy="6.5" r="1.6" />
   </svg>
 );
+
+const line = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+
+export const Camera = () => (
+  <svg viewBox="0 0 24 24" {...line} aria-hidden>
+    <path d="M4 8.5h3l1.5-2h7l1.5 2h3v10H4v-10Z" />
+    <circle cx="12" cy="13" r="3.2" />
+  </svg>
+);
+
+export const Book = () => (
+  <svg viewBox="0 0 24 24" {...line} aria-hidden>
+    <path d="M12 6.5C10.5 5.3 8 4.8 4.5 5v13c3.5-.2 6 .3 7.5 1.5m0-13c1.5-1.2 4-1.7 7.5-1.5v13c-3.5-.2-6 .3-7.5 1.5m0-13v13" />
+  </svg>
+);
+
+export const Heart = () => (
+  <svg viewBox="0 0 24 24" {...line} aria-hidden>
+    <path d="M12 19.5S4.5 15 4.5 9.7A3.9 3.9 0 0 1 12 8a3.9 3.9 0 0 1 7.5 1.7C19.5 15 12 19.5 12 19.5Z" />
+  </svg>
+);
+
+export const Chat = () => (
+  <svg viewBox="0 0 24 24" {...line} aria-hidden>
+    <path d="M5 5.5h14v10H10l-4 3.5v-3.5H5v-10Z" />
+  </svg>
+);
+
+export const Search = () => (
+  <svg viewBox="0 0 24 24" {...line} aria-hidden>
+    <circle cx="11" cy="11" r="6" />
+    <path d="m20 20-4.2-4.2" />
+  </svg>
+);
+
+export const PlayFill = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" />
+  </svg>
+);
+
+export const Star = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="m12 3 2.7 5.8 6.3.7-4.7 4.3 1.3 6.2L12 16.8 6.4 20l1.3-6.2L3 9.5l6.3-.7L12 3Z" />
+  </svg>
+);
+
+export const WhatsApp = ({ className = "arrow" }: P) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 20l1.2-4.1A8 8 0 1 1 8.2 18.8L4 20Z" />
+    <path d="M9.5 8.5c.3 2.4 2.6 4.8 5 5l1-1.200-1.800-1-.8.800c-.8-.4-1.600-1.200-2-2l.8-.8-1-1.800-1.200 1Z" />
+  </svg>
+);
+
+export const Copy = ({ className = "arrow" }: P) => (
+  <svg className={className} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+    <rect x="5.5" y="5.5" width="8" height="8" rx="1.5" />
+    <path d="M10.5 3.5v-.5A1 1 0 0 0 9.5 2h-6.5A1 1 0 0 0 2 3v6.5a1 1 0 0 0 1 1h.5" strokeLinecap="round" />
+  </svg>
+);

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getObject, r2Configured } from "./r2";
+import { getSettings } from "./settings";
 
 export type Photo = {
   id: string;
@@ -25,9 +26,23 @@ export const MANIFEST_KEY = "manifest.json";
 
 // Photos come from Google Drive (copied to R2 by lib/sync.ts) when R2 is set up.
 // Without it, e.g. on your own computer, they come from the folders in public/photos.
-export async function getAlbums(): Promise<Album[]> {
-  const albums = r2Configured() ? await readManifestAlbums() : readLocalAlbums();
-  return albums.filter((a) => a.photos.length > 0).sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
+// Albums hidden in the admin area are left out unless asked for.
+export async function getAlbums({ includeHidden = false } = {}): Promise<Album[]> {
+  const [albums, { hiddenAlbums }] = await Promise.all([r2Configured() ? readManifestAlbums() : readLocalAlbums(), getSettings()]);
+  const hidden = new Set(hiddenAlbums);
+  return albums
+    .filter((a) => a.photos.length > 0 && (includeHidden || !hidden.has(albumKey(a))))
+    .sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
+}
+
+/** Stable id for hiding an album: its Drive folder (survives renames), or its slug for local albums. */
+export const albumKey = (a: Pick<Album, "folderId" | "slug">) => a.folderId ?? a.slug;
+
+/** The newest photos across all albums, newest album first. */
+export function latestPhotos(albums: Album[], limit = 12) {
+  return albums
+    .flatMap((album) => album.photos.map((photo, index) => ({ photo, index, albumTitle: album.title, albumSlug: album.slug })))
+    .slice(0, limit);
 }
 
 export async function getAlbum(slug: string) {

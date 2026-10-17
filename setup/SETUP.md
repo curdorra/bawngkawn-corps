@@ -45,11 +45,12 @@ so the site keeps working after you hand it over.
    The email never contains what the person wrote. It links to the Sheet.
    (No-code alternative: in the Sheet, **Tools → Notification settings → Email right away**. Test it first, since changes made by the website's robot account may not trigger it.)
 
-### 3c. Sermon editing passcode
+### 3c. Admin logins
 
-Choose a passcode and put it in `SERMON_EDIT_CODE` (Vercel → Settings → Environment Variables). Leave it empty to turn editing off.
-People unlock editing at `/sermons/manage`. After 10 wrong guesses in 15 minutes, nobody can try for 15 minutes.
-A longer passcode is safer than 4 digits; any letters or numbers work.
+Put the two or three people who may edit in `ADMIN_USERS` (Vercel → Settings → Environment Variables), as `name:password` pairs separated by commas:
+`Lalthan:a-long-password,Mary:another-long-password`. Passwords can't contain a comma. Leave it empty to turn the admin area off.
+They sign in at `/admin`. After 10 wrong guesses in 15 minutes, nobody can try for 15 minutes. Removing someone from `ADMIN_USERS` signs them out.
+Optionally set `AUTH_SECRET` to any long random text (it signs the login cookie).
 
 ## 4. Cloudflare R2: where the website's copies of the photos live
 
@@ -83,8 +84,9 @@ Put a test folder in **Website Photos**, e.g. `2026-10-11 Harvest Thanksgiving`,
 
 ## How it works (for whoever maintains the code)
 
-- `lib/sermons.ts` keeps the sermons in `sermons.json` (R2 on the live site, `.data/` on your computer). `/sermons/manage` edits them behind the `SERMON_EDIT_CODE` passcode (`lib/sermon-auth.ts`: signed 12-hour cookie, shared lockout).
-- `lib/videos.ts` reads the latest videos from the YouTube channel in the Contact tab (public feed, no key).
+- `lib/sermons.ts` keeps the sermons (a YouTube id plus preacher, scripture, series, summary, notes, language, hidden) in `sermons.json`, and `lib/settings.ts` keeps the series list, the pinned sermon, the Drive folder and the hidden albums in `settings.json` (R2 on the live site, `.data/` on your computer). `/admin` edits them (`lib/admin-auth.ts`: named logins from `ADMIN_USERS`, signed 12-hour cookie, shared lockout; API under `app/api/admin`).
+- `lib/youtube.ts` fills in a pasted link's title, thumbnail and date (YouTube oEmbed plus the watch page, no key).
+- Storage is small JSON files rather than a database. That is fine for a handful of editors; if it ever outgrows that, only `lib/store.ts` callers (`lib/sermons.ts`, `lib/settings.ts`) need to change.
 - `app/api/counselling` adds form submissions to the private Sheet. It checks a hidden spam field, limits each visitor to 5 an hour, and never logs the message.
 - `lib/content.ts` reads the Sheet. Pages refresh every 2 minutes (`revalidate = 120`).
   If Google can't be reached, the last good version of the page stays up.

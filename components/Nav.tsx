@@ -61,11 +61,15 @@ function MobileMenu({ social }: { social: Social }) {
             </button>
           </div>
           <nav>
-            {links.map((l) => (
-              <Link key={l.href} href={l.href} onClick={() => setOpen(false)}>
-                {l.label}
-              </Link>
-            ))}
+            {links.map((l) =>
+              l.soon ? (
+                <span key={l.href} className="soon">{l.label} <small>soon</small></span>
+              ) : (
+                <Link key={l.href} href={l.href} onClick={() => setOpen(false)}>
+                  {l.label}
+                </Link>
+              )
+            )}
           </nav>
           <Socials social={social} />
         </div>
@@ -81,7 +85,9 @@ export function Header({ social }: { social: Social }) {
       <div className="wrap">
         <Brand />
         <nav aria-label="Main">
-          {links.filter((l) => l.href !== "/").map((l) => (
+          {links.filter((l) => l.href !== "/").map((l) => l.soon ? (
+            <span key={l.href} className="soon" title="Coming soon">{l.label}</span>
+          ) : (
             <Link
               key={l.href}
               href={l.href}
@@ -106,13 +112,14 @@ export function Footer({ social }: { social: Social }) {
           © {new Date().getFullYear()} {site.name} · {site.tagline}
         </span>
         <nav>
-          {links.slice(1).map((l) => (
+          {links.slice(1).filter((l) => !l.soon).map((l) => (
             <Link key={l.href} href={l.href}>
               {l.label}
             </Link>
           ))}
         </nav>
         <Socials social={social} />
+        <Link href="/admin" className="admin-link">Admin</Link>
       </div>
     </footer>
   );

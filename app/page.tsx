@@ -2,128 +2,126 @@ import Image from "next/image";
 import Link from "next/link";
 import { after } from "next/server";
 import { getContent } from "@/lib/content";
-import { formatDate, getAlbums } from "@/lib/albums";
-import { getVideos } from "@/lib/videos";
-import { excerpt, listSermons } from "@/lib/sermons";
+import { formatDate, getAlbums, latestPhotos } from "@/lib/albums";
+import { listSermons, pickFeatured, toCard } from "@/lib/sermons";
 import { syncIfStale } from "@/lib/sync";
 import { Footer, Header } from "@/components/Nav";
 import { AlbumCard } from "@/components/AlbumCard";
-import { MissionCards } from "@/components/Missions";
-import { ArrowUpRight, Pin } from "@/components/icons";
+import { LatestPhotos } from "@/components/AlbumViewer";
+import { SermonCard } from "@/components/SermonBrowser";
+import { ArrowUpRight, Book, Camera, Heart, Pin, PlayFill, Star } from "@/components/icons";
 
-// Refresh every few minutes so Sheet edits and new albums show up on their own.
+// Refresh every few minutes so new albums and sermons show up on their own.
 export const revalidate = 120;
 
+const features = [
+  { href: "/photos", icon: <Camera />, title: "Photos", text: "Every programme in its own album. Save the ones you like in full quality.", cta: "See photos" },
+  { href: "/sermons", icon: <Book />, title: "Sermons", text: "Watch or revisit a message, with the scripture, summary and notes.", cta: "Hear the word" },
+  { href: "/give", icon: <Heart />, title: "Give", text: "Support our worship, our sections and our care by UPI or bank.", cta: "Give" },
+];
+
 export default async function Home() {
-  const { site, meetings, missions } = await getContent();
+  const { site, meetings } = await getContent();
   after(syncIfStale);
   const allAlbums = await getAlbums();
   const albums = allAlbums.slice(0, 6);
-  const videos = await getVideos(site.social.youtube);
-  const sermons = (await listSermons().catch(() => [])).slice(0, 3);
-  const sunday = meetings[0];
+  const latest = latestPhotos(allAlbums, 9);
+  const sermons = (await listSermons().catch(() => [])).filter((s) => s.youtubeId);
+  const featured = pickFeatured(sermons);
+  const videos = (featured ? [featured, ...sermons.filter((s) => s !== featured)] : []).slice(0, 3).map(toCard);
 
   return (
     <>
       <Header social={site.social} />
 
-      {/* ── Hero ── */}
-      <section className="hero">
-        <div className="hero-media">
-          <Image src="/images/site/hero.jpg" alt="" fill priority sizes="100vw" />
-        </div>
-        <div className="hero-copy">
-          <h1>
-            {site.hero.titleLine1} <em>{site.hero.titleLine2}</em>
-          </h1>
-          <p className="lead">{site.hero.subtitle}</p>
-          <div className="btn-row">
-            <Link href="/photos" className="btn btn-light">
-              See recent photos <ArrowUpRight />
-            </Link>
-            <a href="#worship" className="btn btn-ghost">
-              Meeting times
-            </a>
+      {/* ── Newest photos lead the page ── */}
+      <section id="photos" className="section tight" style={{ paddingTop: "clamp(20px, 3vw, 40px)" }}>
+        <div className="wrap">
+          <div className="section-head">
+            <div>
+              <p className="kicker">The Salvation Army · Bawngkawn Corps, Aizawl</p>
+              <h1 className="h2" style={{ fontSize: "clamp(42px, 6vw, 78px)" }}>
+                Latest <em>photos</em>
+              </h1>
+            </div>
+            <p className="sub">The newest pictures from our programmes. Tap one to see it full screen, then swipe for more.</p>
           </div>
+          {latest.length > 0 ? <LatestPhotos items={latest} /> : <p className="tip">Photos will appear here soon.</p>}
         </div>
       </section>
 
-      {/* ── Four doors in ── */}
-      <div className="wrap">
-        <nav className="doors" aria-label="Start here">
-          <a href="#worship" className="door navy">
-            <span className="k">Join us</span>
-            <b>{sunday ? `${sunday.day} ${sunday.time}` : "Every Sunday"}</b>
-            <span>{sunday?.name ?? "Worship"}</span>
-          </a>
-          <Link href="/sermons" className="door">
-            <span className="k">Read</span>
-            <b>Sermons</b>
-            <span>Messages from our meetings</span>
-          </Link>
-          <Link href="/give" className="door">
-            <span className="k">Give</span>
-            <b>Support the work</b>
-            <span>Offerings by UPI or bank</span>
-          </Link>
-          <Link href="/counselling" className="door red">
-            <span className="k">Care</span>
-            <b>Talk to someone</b>
-            <span>Private, and always welcome</span>
-          </Link>
-        </nav>
-      </div>
-
-      {/* ── Photos (the main feature) ── */}
+      {/* ── Albums by programme ── */}
       {albums.length > 0 && (
-        <section id="photos" className="section">
+        <section className="section soft">
           <div className="wrap">
             <div className="section-head">
               <h2 className="h2">
-                Recent <em>photos</em>
+                By <em>programme</em>
               </h2>
-              <p className="sub">Open an album to save your photos in full quality, or download the whole album.</p>
+              <Link href="/photos" className="u-link">
+                All albums <ArrowUpRight />
+              </Link>
             </div>
             <div className="albums">
               {albums.map((a) => (
                 <AlbumCard key={a.slug} album={a} />
               ))}
             </div>
-            <div className="more">
-              <Link href="/photos" className="btn btn-red">
-                See all albums <ArrowUpRight />
-              </Link>
-            </div>
           </div>
         </section>
       )}
 
-      {/* ── Missions ── */}
-      <section className="section mist">
-        <div className="wrap">
-          <div className="section-head">
-            <h2 className="h2">
-              Faith in <em>action</em>
-            </h2>
-            <Link href="/missions" className="u-link">
-              All our missions
-            </Link>
+      {/* ── Latest YouTube videos (the pinned sermon comes first) ── */}
+      {videos.length > 0 && (
+        <section id="sermons" className="section">
+          <div className="wrap">
+            <div className="section-head">
+              <h2 className="h2">
+                Latest <em>videos</em>
+              </h2>
+              <Link href="/sermons" className="u-link">
+                All sermons <ArrowUpRight />
+              </Link>
+            </div>
+            <ul className="sermon-grid">
+              {videos.map((s) => (
+                <li key={s.slug}>
+                  <SermonCard s={s} />
+                </li>
+              ))}
+            </ul>
           </div>
-          <MissionCards missions={missions.slice(0, 3)} albums={allAlbums} />
+        </section>
+      )}
+
+      {/* ── What's here ── */}
+      <section className="section">
+        <div className="wrap features">
+          <div>
+            <p className="kicker">What&apos;s here</p>
+            <h2>Everything from our corps, in one place.</h2>
+          </div>
+          <ul className="feature-list">
+            {features.map((f) => (
+              <li key={f.href}>
+                <Link href={f.href} className="feature">
+                  <span className="icon-circle">{f.icon}</span>
+                  <h3>{f.title}</h3>
+                  <p>{f.text}</p>
+                  <span className="u-link">
+                    {f.cta} <ArrowUpRight />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      {/* ── Worship times ── */}
-      <section id="worship" className="worship">
+      {/* ── Meetings ── */}
+      <section id="worship" className="strip">
         <div className="wrap">
-          <p className="kicker">Join us for worship</p>
-          <h2>
-            Every Sunday at {meetings[0]?.time}
-            <em>everyone is welcome.</em>
-          </h2>
-          <a className="where" href={site.contact.mapLink} target="_blank" rel="noreferrer">
-            <Pin /> {site.contact.address}
-          </a>
+          <p className="label">Join us · everyone is welcome</p>
           <ul className="meetings">
             {meetings.map((m) => (
               <li key={m.day + m.name}>
@@ -133,121 +131,54 @@ export default async function Home() {
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      {/* ── Sermons (written) ── */}
-      {sermons.length > 0 && (
-        <section id="sermons" className="section">
-          <div className="wrap">
-            <div className="section-head">
-              <h2 className="h2">
-                From the <em>pulpit</em>
-              </h2>
-              <Link href="/sermons" className="u-link">
-                All sermons
-              </Link>
-            </div>
-            <ul className="sermon-list cols">
-              {sermons.map((s) => (
-                <li key={s.slug}>
-                  <Link href={`/sermons/${s.slug}`}>
-                    <span className="d">{formatDate(s.date)}</span>
-                    <h3>{s.title}</h3>
-                    <p>{excerpt(s)}</p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {/* ── Videos (YouTube) ── */}
-      {videos.length > 0 && (
-        <section id="watch" className="section mist">
-          <div className="wrap">
-            <div className="section-head">
-              <h2 className="h2">
-                Watch <em>with us</em>
-              </h2>
-              <a href={site.social.youtube} target="_blank" rel="noreferrer" className="u-link">
-                More on YouTube
-              </a>
-            </div>
-            <ul className="videos">
-              {videos.map((v) => (
-                <li key={v.id}>
-                  <a href={v.url} target="_blank" rel="noreferrer">
-                    <span className="thumb">
-                      <img src={v.thumb} alt="" loading="lazy" />
-                      <i className="play" />
-                    </span>
-                    <h3>{v.title}</h3>
-                    <p>{formatDate(v.date)}</p>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {/* ── Care ── */}
-      <section className="band navy">
-        <div className="wrap">
-          <h2>
-            You don&apos;t have to carry it <em>alone.</em>
-          </h2>
-          <p>If you are feeling low, anxious or lonely, we would be glad to listen and pray with you.</p>
-          <Link href="/counselling" className="btn btn-red">
-            Talk to someone
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Give ── */}
-      <section className="band">
-        <div className="wrap">
-          <h2>
-            Help us keep <em>serving.</em>
-          </h2>
-          <p>Every offering supports our worship, our sections and our care for the community.</p>
-          <Link href="/give" className="btn btn-red">
-            Give
-          </Link>
-        </div>
-      </section>
-
-      {/* ── Visit ── */}
-      <section id="visit" className="statement">
-        <Image src="/images/site/about.jpg" alt="" fill sizes="100vw" />
-        <div className="wrap">
-          <h2>
-            A place to <em>belong</em>,
-            <br />
-            grow, <em>&amp; serve.</em>
-          </h2>
-          <div className="btn-row">
-            <a href={site.contact.mapLink} target="_blank" rel="noreferrer" className="btn btn-light">
-              Get directions <ArrowUpRight />
+          <p className="where-row">
+            <a className="where" href={site.contact.mapLink} target="_blank" rel="noreferrer">
+              <Pin /> {site.contact.address}
             </a>
-            {site.contact.whatsapp && (
-              <a href={site.contact.whatsapp} target="_blank" rel="noreferrer" className="btn btn-ghost">
-                WhatsApp us
-              </a>
-            )}
+          </p>
+        </div>
+      </section>
+
+      {/* ── Hero, at the bottom ── */}
+      <section className="hero" style={{ paddingTop: "clamp(40px, 6vw, 72px)" }}>
+        <div className="wrap">
+          <div className="hero-panel">
+            <div>
+              <p className="kicker">The Salvation Army · Aizawl</p>
+              <h2 className="hero-title">
+                {site.hero.titleLine1} <em>{site.hero.titleLine2}</em>
+              </h2>
+              <p className="lead">{site.hero.subtitle}</p>
+              <div className="btn-row">
+                <Link href={featured ? `/sermons/${featured.slug}` : "/sermons"} className="btn btn-dark">
+                  {featured ? "Watch latest sermon" : "Sermons"} <ArrowUpRight />
+                </Link>
+                <Link href="/photos" className="btn btn-ghost">
+                  See photos
+                </Link>
+              </div>
+            </div>
+            <div className="hero-art">
+              <div className="hero-arch">
+                <Image src="/images/site/hero.jpg" alt="" fill sizes="(max-width: 960px) 90vw, 460px" />
+              </div>
+              {featured && (
+                <Link href={`/sermons/${featured.slug}`} className="pinned">
+                  <span className="thumb">
+                    {featured.thumb && <img src={featured.thumb} alt="" />}
+                    <i className="play">
+                      <PlayFill />
+                    </i>
+                  </span>
+                  <span className="tag">
+                    <Star /> {featured.featured ? "Pinned sermon" : "Latest sermon"}
+                  </span>
+                  <b>{featured.title}</b>
+                  <small>{[featured.preacher, formatDate(featured.date)].filter(Boolean).join(" · ")}</small>
+                </Link>
+              )}
+            </div>
           </div>
-          <ul className="contact-row">
-            <li>
-              <span>Address</span>
-              {site.contact.address}
-            </li>
-            <li>
-              <span>Email</span>
-              <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
-            </li>
-          </ul>
         </div>
       </section>
 

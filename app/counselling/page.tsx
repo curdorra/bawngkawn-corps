@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ComingSoon } from "@/components/ComingSoon";
+import { isSoon } from "@/content/nav";
 import { getContent } from "@/lib/content";
 import { CounsellingForm } from "@/components/CounsellingForm";
 import { PageShell } from "@/components/PageShell";
@@ -7,6 +9,7 @@ export const metadata: Metadata = { title: "Talk to someone" };
 export const revalidate = 120;
 
 export default async function CounsellingPage() {
+  if (isSoon("/counselling")) return <ComingSoon title="Counselling" />;
   const { site } = await getContent();
   return (
     <PageShell

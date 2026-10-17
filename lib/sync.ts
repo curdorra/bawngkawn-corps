@@ -2,6 +2,7 @@ import sharp, { type Metadata } from "sharp";
 import { type Manifest, type Photo, MANIFEST_KEY, parseFolderName, slugify } from "./albums";
 import { type DriveFile, downloadFile, downloadRendition, listAlbumFolders, listImages } from "./drive";
 import { googleConfigured } from "./google";
+import { getDriveFolderId } from "./settings";
 import { deleteObject, getObject, putObject, publicUrl, r2Configured } from "./r2";
 
 // Copies photos from the "Website Photos" Drive folder into R2:
@@ -13,13 +14,13 @@ import { deleteObject, getObject, putObject, publicUrl, r2Configured } from "./r
 const LOCK_KEY = "sync-lock.json";
 const STALE_AFTER_MS = 4 * 60_000;
 
-export const syncConfigured = () => googleConfigured() && r2Configured() && Boolean(process.env.GOOGLE_DRIVE_FOLDER_ID);
+export const syncConfigured = async () => googleConfigured() && r2Configured() && Boolean(await getDriveFolderId());
 
 export type SyncResult = { skipped?: string; added: number; removed: number; albums: number; pending: number };
 
 /** Runs a sync unless one ran in the last few minutes. Safe to call on every page render. */
 export async function syncIfStale() {
-  if (!syncConfigured()) return;
+  if (!(await syncConfigured())) return;
   const raw = await getObject(MANIFEST_KEY);
   const checkedAt = raw ? Date.parse((JSON.parse(raw) as Manifest).checkedAt) : 0;
   if (Date.now() - checkedAt < STALE_AFTER_MS) return;
@@ -31,7 +32,7 @@ export async function syncPhotos({ budgetMs = 45_000 } = {}): Promise<SyncResult
   const outOfTime = () => Date.now() - started > budgetMs;
   const result: SyncResult = { added: 0, removed: 0, albums: 0, pending: 0 };
 
-  if (!syncConfigured()) return { ...result, skipped: "not configured" };
+  if (!(await syncConfigured())) return { ...result, skipped: "not configured" };
 
   // Simple lock so two visitors don't start two syncs at once.
   const lock = await getObject(LOCK_KEY);
@@ -44,7 +45,7 @@ export async function syncPhotos({ budgetMs = 45_000 } = {}): Promise<SyncResult
     const byFolder = new Map(manifest.albums.map((a) => [a.folderId, a]));
     const save = () => putObject(MANIFEST_KEY, JSON.stringify({ ...manifest, checkedAt: new Date().toISOString() }), "application/json", "no-store");
 
-    const folders = await listAlbumFolders(process.env.GOOGLE_DRIVE_FOLDER_ID!);
+    const folders = await listAlbumFolders(await getDriveFolderId());
     const seenFolders = new Set(folders.map((f) => f.id));
     const usedSlugs = new Set<string>();
 

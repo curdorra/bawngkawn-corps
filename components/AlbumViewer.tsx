@@ -93,12 +93,16 @@ export function AlbumActions({ slug, title, photos }: Props) {
   );
 }
 
-export function PhotoGrid({ slug, title, photos }: Props) {
+type Item = { photo: Photo; title: string; file: string };
+
+// Thumbnails that open a full-screen viewer you can swipe through. Used for an album and for the newest photos on the home page.
+function Gallery({ items, className, caption }: { items: Item[]; className: string; caption?: boolean }) {
   const [open, setOpen] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const touchX = useRef<number | null>(null);
+  const count = items.length;
 
-  const go = useCallback((d: number) => setOpen((i) => (i === null ? null : (i + d + photos.length) % photos.length)), [photos.length]);
+  const go = useCallback((d: number) => setOpen((i) => (i === null ? null : (i + d + count) % count)), [count]);
 
   useEffect(() => {
     if (open === null) return;
@@ -111,20 +115,20 @@ export function PhotoGrid({ slug, title, photos }: Props) {
     document.body.style.overflow = "hidden";
     // Preload the neighbours so swiping feels instant.
     [open - 1, open + 1].forEach((i) => {
-      const p = photos[(i + photos.length) % photos.length];
-      if (p) new Image().src = p.preview;
+      const it = items[(i + count) % count];
+      if (it) new Image().src = it.photo.preview;
     });
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, go, photos]);
+  }, [open, go, items, count]);
 
   async function save() {
     if (open === null) return;
     setSaving(true);
     try {
-      await savePhoto(photos[open].original, fileName(slug, open));
+      await savePhoto(items[open].photo.original, items[open].file);
     } catch {
       alert("Sorry, the photo couldn't be saved. Please try again.");
     } finally {
@@ -132,22 +136,24 @@ export function PhotoGrid({ slug, title, photos }: Props) {
     }
   }
 
+  const current = open === null ? null : items[open];
+
   return (
     <>
-      <p className="tip">Tap a photo to view it full size and save it.</p>
-      <div className="photo-grid">
-        {photos.map((p, i) => (
-          <button key={p.id} className="photo-tile" onClick={() => setOpen(i)} aria-label={`Open photo ${i + 1}`}>
-            <img src={p.thumb} alt={`${title}, photo ${i + 1}`} loading="lazy" decoding="async" />
+      <div className={className}>
+        {items.map((it, i) => (
+          <button key={it.photo.id} className="photo-tile" onClick={() => setOpen(i)} aria-label={`Open photo ${i + 1}: ${it.title}`}>
+            <img src={it.photo.thumb} alt={it.title} loading="lazy" decoding="async" />
+            {caption && <span className="cap">{it.title}</span>}
           </button>
         ))}
       </div>
 
-      {open !== null && (
-        <div className="lightbox" role="dialog" aria-modal="true" aria-label={`${title}, photo ${open + 1}`}>
+      {current && open !== null && (
+        <div className="lightbox" role="dialog" aria-modal="true" aria-label={`${current.title}, photo ${open + 1}`}>
           <div className="lb-top">
             <span className="lb-count">
-              {open + 1} / {photos.length}
+              {open + 1} / {count} · {current.title}
             </span>
             <button className="icon-btn" onClick={() => setOpen(null)} aria-label="Close">
               <Close />
@@ -163,7 +169,7 @@ export function PhotoGrid({ slug, title, photos }: Props) {
               touchX.current = null;
             }}
           >
-            <img key={photos[open].id} src={photos[open].preview} alt={`${title}, photo ${open + 1}`} />
+            <img key={current.photo.id} src={current.photo.preview} alt={`${current.title}, photo ${open + 1}`} />
             <button className="lb-nav lb-prev" onClick={() => go(-1)} aria-label="Previous photo">
               <Chevron dir="left" />
             </button>
@@ -180,5 +186,26 @@ export function PhotoGrid({ slug, title, photos }: Props) {
         </div>
       )}
     </>
+  );
+}
+
+export function PhotoGrid({ slug, title, photos }: Props) {
+  const items = photos.map((photo, i) => ({ photo, title: `${title}, photo ${i + 1}`, file: fileName(slug, i) }));
+  return (
+    <>
+      <p className="tip">Tap a photo to view it full size and save it.</p>
+      <Gallery items={items} className="photo-grid" />
+    </>
+  );
+}
+
+/** The newest photos from every album, as a mosaic. Each one opens in the viewer; swipe to see the next. */
+export function LatestPhotos({ items }: { items: { photo: Photo; albumTitle: string; albumSlug: string; index: number }[] }) {
+  return (
+    <Gallery
+      className="mosaic"
+      caption
+      items={items.map((it) => ({ photo: it.photo, title: it.albumTitle, file: fileName(it.albumSlug, it.index) }))}
+    />
   );
 }

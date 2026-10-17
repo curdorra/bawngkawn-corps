@@ -27,16 +27,21 @@ Changes appear on the website **within about 5 minutes**.
 
 ## Putting up a sermon
 
-1. Open the website and go to **Sermons**, then press **Edit sermons** at the bottom.
-2. Type the **passcode** and press **Unlock**.
-3. Fill in the date, the title and the sermon (every new line becomes a paragraph), then press **Publish**. It is on the website straight away.
+1. Upload the video to YouTube as usual.
+2. Open the website, scroll to the bottom and press **Admin** (or go to `/admin`). Sign in with your name and password.
+3. In **Sermons**, paste the YouTube link. The title, thumbnail and date fill in by themselves.
+4. Add the preacher, scripture, series, language, a short summary and any notes, then press **Publish**. It is on the website straight away.
 
 **Good to know**
-- On the same page you can **Edit** or **Delete** any sermon. Deleting can't be undone.
-- Only plain words are shown: no bold, headings or pictures.
-- You stay unlocked for 12 hours on that device. Press **Lock editing** when you finish on a shared phone or computer.
-- Keep the passcode private. If someone wrong tries guessing it, the page locks for everyone for 15 minutes. Wait and try again.
-- Videos are separate: just upload them to YouTube as usual and the three newest appear on the home page by themselves.
+- **Series:** make one in the **Series** tab first, then pick it on the sermon. Renaming a series renames it everywhere.
+- **Pin** a sermon to feature it at the top of the home page. With nothing pinned, the newest sermon is shown.
+- **Hide** takes a sermon off the website without deleting it. **Delete** can't be undone.
+- You stay signed in for 12 hours on that device. Press **Sign out** when you finish on a shared phone or computer.
+- Keep passwords private. If someone wrong tries guessing, sign-in locks for everyone for 15 minutes. Wait and try again.
+
+## Choosing which photos show
+
+In **Admin → Photos** you can switch to a different Drive folder, press **Check Drive now** to bring in new photos straight away, and **Hide** an album from the website without deleting it from Drive.
 
 ---
 
@@ -49,7 +54,7 @@ Change the text in the cells. There's no "save" button; Google saves by itself.
 |---|---|---|
 | **Officers** | Corps Officers on the About page | Rank changes: change *Captain* to *Major* |
 | **Meetings** | Weekly meeting times | Change *10:00 AM* to *9:30 AM* |
-| **Contact** | Phone, email, WhatsApp, address, Facebook/YouTube links | Paste your YouTube channel link (like `https://www.youtube.com/@yourchannel`) and the latest sermons show up on their own |
+| **Contact** | Phone, email, WhatsApp, address, Facebook/YouTube links | Paste your YouTube channel link (like `https://www.youtube.com/@yourchannel`) for the footer icon |
 | **Sections** | The Sections page | |
 | **Missions** | The Missions page and the home page | One row per mission. *Album* is optional: type part of a photo album's name and that album's first photo is used as the picture |
 | **Give** | The Give page | UPI ID, bank details. Leave a row empty and it just isn't shown |
