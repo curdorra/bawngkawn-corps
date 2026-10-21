@@ -7,7 +7,7 @@ import { syncIfStale } from "@/lib/sync";
 import { Footer, Header } from "@/components/Nav";
 import { AlbumCard } from "@/components/AlbumCard";
 import { LatestPhotos } from "@/components/AlbumViewer";
-import { ArrowUpRight, Book, Camera, Heart, Pin, PlayFill } from "@/components/icons";
+import { ArrowUpRight, Book, Camera, Heart, Pin } from "@/components/icons";
 
 // Refresh every few minutes so new albums and sermons show up on their own.
 export const revalidate = 120;
@@ -85,7 +85,6 @@ export default async function Home() {
                   <a href={v.url} className="sermon-card" target="_blank" rel="noreferrer">
                     <span className="thumb">
                       <img src={v.thumb} alt="" loading="lazy" />
-                      <i className="play"><PlayFill /></i>
                     </span>
                     <div className="meta">
                       <span>{formatDate(v.date)}</span>
